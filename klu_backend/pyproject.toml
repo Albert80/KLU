@@ -1,0 +1,47 @@
+[project]
+name = "klu-backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.15.2",
+    "celery[redis]>=5.5.1",
+    "fastapi[standard]>=0.115.12",
+    "httpx>=0.28.1",
+    "pydantic-settings>=2.8.1",
+    "requests>=2.32.3",
+    "sqlalchemy>=2.0.40",
+]
+
+[dependency-groups]
+dev = [
+    "bandit>=1.8.3",
+    "flower>=2.0.1",
+    "icecream>=2.1.4",
+    "pytest>=8.3.5",
+    "ruff>=0.11.5",
+    "wily>=1.25.0",
+]
+
+
+# Formateo de código
+# format = "ruff format ."
+
+# Linting y análisis de errores
+# lint = "ruff check ."
+
+# Fix automático de errores
+# fix = "ruff check --fix ."
+
+# Ordenamiento de imports (ya lo hace ruff)
+# sort = "ruff check --select I --fix ."
+
+# Pruebas unitarias
+# test = "pytest"
+
+# Pruebas con reporte de cobertura
+# cov = "pytest --cov=."
+
+# Workflow completo
+# all = "ruff format . && ruff check --fix ."
