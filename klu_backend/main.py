@@ -5,8 +5,8 @@ from app.models.transaction import Base
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Crear tablas en la base de datos
-Base.metadata.create_all(bind=engine)
+# Crear tablas en la base de datos (pero ya existe alembic)
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"

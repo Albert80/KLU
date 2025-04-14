@@ -24,8 +24,8 @@ Aplicación de procesamiento de pagos desarrollada con FastAPI, Next.js y la API
 
 1. Clonar el repositorio:
    ```bash
-   git clone https://github.com/username/checkout-payment-app.git
-   cd checkout-payment-app
+   git clone https://github.com/Albert80/KLU.git
+   cd KLU
    ```
 
 2. Crear y configurar el archivo `.env` usando como referencia `.env.example`:
@@ -79,20 +79,6 @@ Opción 2:
    npm run dev
    ```
 
-## Uso con Docker
-
-Si prefieres usar Docker:
-
-```bash
-# Construir y levantar todos los servicios
-docker-compose up -d
-
-# Ver logs
-docker-compose logs -f
-
-# Detener servicios
-docker-compose down
-```
 
 ## Estructura del Proyecto
 
@@ -118,10 +104,6 @@ KLU/
 │   ├── public/             # Archivos estáticos
 │   ├── styles/             # Estilos CSS
 │   └── utils/              # Utilidades
-├── docker-compose.yml
-├── Dockerfile.backend
-├── Dockerfile.frontend
-├── k8s/                    # Configuraciones Kubernetes
 ├── .env.template
 └── README.md
 ```
