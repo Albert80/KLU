@@ -1,9 +1,11 @@
+import logging
 import uuid
 
 from app.db.session import get_db
+from app.models.transaction import Transaction
 from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.transaction import (
-    PaymentRequest,
+    CardPaymentRequest,
     TransactionCreate,
     TransactionResponse,
 )
@@ -21,23 +23,23 @@ blumonpay_service = BlumonpayService()
     "/", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED
 )
 async def create_transaction(
-    payment_data: PaymentRequest, db: Session = Depends(get_db)
+    payment_data: CardPaymentRequest, db: Session = Depends(get_db)
 ):
+    payload = payment_data.model_dump(
+        exclude={"noPresentCardData"},
+    )
     # Crear registro de transacción inicial
     transaction_data = TransactionCreate(
-        amount=payment_data.amount,
-        currency=payment_data.currency,
-        customer_email=payment_data.customer_email,
-        customer_name=payment_data.customer_name,
-    )
-    transaction = transaction_repo.create_transaction(db, transaction_data)
-
-    process_payment.delay(
-        str(transaction.id),
-        payment_data.model_dump()
+        **payload
     )
 
-    return transaction
+    transaction: Transaction = transaction_repo.create_transaction(
+        db=db,
+        transaction=transaction_data,
+    )
+
+    process_payment.delay(str(transaction.id), payment_data.model_dump(mode='json'))
+    return TransactionResponse.model_validate(obj=transaction)
 
 
 @router.get("/{transaction_id}", response_model=TransactionResponse)

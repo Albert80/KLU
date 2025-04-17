@@ -6,12 +6,15 @@ from sqlalchemy.orm import Session
 
 
 class TransactionRepository:
-    def create_transaction(self, db: Session, transaction: TransactionCreate):
+    def create_transaction(self, db: Session, transaction: TransactionCreate) -> Transaction:
         db_transaction = Transaction(
             amount=transaction.amount,
             currency=transaction.currency,
-            customer_email=transaction.customer_email,
-            customer_name=transaction.customer_name,
+            customer_email=transaction.customerInformation.email,
+            customer_name="{first_name} {last_name}".format(
+                first_name=transaction.customerInformation.firstName,
+                last_name=transaction.customerInformation.lastName,
+            ),
             status="pending",
         )
         db.add(db_transaction)

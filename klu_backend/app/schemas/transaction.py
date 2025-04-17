@@ -2,33 +2,58 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, IPvAnyAddress
+
+
+class CustomerInfo(BaseModel):
+    firstName: str
+    lastName: str
+    middleName: str = ""
+    email: EmailStr | str
+    phone1: str
+    city: str
+    address1: str
+    postalCode: str
+    state: str
+    country: str
+    ip: IPvAnyAddress = '127.0.0.1'
+
+    class Config:
+        json_encoders = {
+            IPvAnyAddress: lambda ipv: str(ipv),
+        }
+
+
+class CardInfo(BaseModel):
+    cardNumber: str = Field(..., min_length=16, max_length=16)
+    expirationMonth: str = Field(..., min_length=2, max_length=2)
+    expirationYear: str = Field(..., min_length=2, max_length=2)
+    cvv: str = Field(..., min_length=3, max_length=3)
+    cardholderName: str = Field(..., min_length=2)
 
 
 class TransactionBase(BaseModel):
     amount: float = Field(..., gt=0)
-    currency: str = Field(..., min_length=3, max_length=3)
-    customer_email: EmailStr
-    customer_name: str = Field(..., min_length=2)
+    currency: str
+    customerInformation: CustomerInfo
+
+
+class TransactionBaseResponse(BaseModel):
+    amount: float = Field(..., gt=0)
+    currency: str
+    customer_email: EmailStr | str
+    customer_name: str
 
 
 class TransactionCreate(TransactionBase):
     pass
 
 
-class CardInfo(BaseModel):
-    card_number: str = Field(..., min_length=16, max_length=16)
-    card_expiry_month: str = Field(..., min_length=2, max_length=2)
-    card_expiry_year: str = Field(..., min_length=2, max_length=2)
-    card_cvv: str = Field(..., min_length=3, max_length=3)
-    card_holder_name: str = Field(..., min_length=2)
+class CardPaymentRequest(TransactionBase):
+    noPresentCardData: CardInfo
 
 
-class PaymentRequest(TransactionBase):
-    card_info: CardInfo
-
-
-class TransactionResponse(TransactionBase):
+class TransactionResponse(TransactionBaseResponse):
     id: uuid.UUID
     status: str
     blumonpay_transaction_id: Optional[str] = None
@@ -36,3 +61,6 @@ class TransactionResponse(TransactionBase):
 
     class Config:
         from_attributes = True
+        json_encoders = {
+            datetime: lambda dt: dt.isoformat(),
+        }
