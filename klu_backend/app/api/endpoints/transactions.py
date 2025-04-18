@@ -7,7 +7,7 @@ from app.repositories.transaction_repository import TransactionRepository
 from app.schemas.transaction import (
     CardPaymentRequest,
     TransactionCreate,
-    TransactionResponse,
+    TransactionCreateResponse,
 )
 from app.services.blumonpay_service import BlumonpayService
 from app.tasks.payment_tasks import process_payment
@@ -20,7 +20,7 @@ blumonpay_service = BlumonpayService()
 
 
 @router.post(
-    "/", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED
+    "/", response_model=TransactionCreateResponse, status_code=status.HTTP_201_CREATED
 )
 async def create_transaction(
     payment_data: CardPaymentRequest, db: Session = Depends(get_db)
@@ -39,10 +39,10 @@ async def create_transaction(
     )
 
     process_payment.delay(str(transaction.id), payment_data.model_dump(mode='json'))
-    return TransactionResponse.model_validate(obj=transaction)
+    return TransactionCreateResponse.model_validate(obj=transaction)
 
 
-@router.get("/{transaction_id}", response_model=TransactionResponse)
+@router.get("/{transaction_id}", response_model=TransactionCreateResponse)
 def get_transaction(transaction_id: uuid.UUID, db: Session = Depends(get_db)):
     transaction = transaction_repo.get_transaction(db, transaction_id)
     if not transaction:
@@ -52,7 +52,7 @@ def get_transaction(transaction_id: uuid.UUID, db: Session = Depends(get_db)):
     return transaction
 
 
-@router.get("/", response_model=list[TransactionResponse])
+@router.get("/", response_model=list[TransactionCreateResponse])
 def list_transactions(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     transactions = transaction_repo.list_transactions(db, skip=skip, limit=limit)
     return transactions

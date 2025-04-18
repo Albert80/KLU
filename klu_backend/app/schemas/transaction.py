@@ -53,7 +53,7 @@ class CardPaymentRequest(TransactionBase):
     noPresentCardData: CardInfo
 
 
-class TransactionResponse(TransactionBaseResponse):
+class TransactionCreateResponse(TransactionBaseResponse):
     id: uuid.UUID
     status: str
     blumonpay_transaction_id: Optional[str] = None

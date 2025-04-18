@@ -7,6 +7,7 @@ import Button from '../../components/ui/Button';
 import Alert from '../../components/ui/Alert';
 import {getTransaction} from "@/utils/api";
 
+
 export default function ConfirmationPage() {
   const router = useRouter();
   const { id } = router.query;
@@ -24,6 +25,7 @@ export default function ConfirmationPage() {
     try {
       setLoading(true);
       const data = await getTransaction(transactionId);
+      console.table(data);
       setTransaction(data);
       setError(null);
     } catch (err) {
@@ -67,24 +69,36 @@ export default function ConfirmationPage() {
   }
 
   const statusColors = {
-    completed: 'bg-green-500',
-    failed: 'bg-red-500',
+    true: 'bg-green-500',
+    false: 'bg-red-500',
     pending: 'bg-yellow-500'
   };
 
   const statusMessages = {
-    completed: 'Payment Successful',
-    failed: 'Payment Failed',
+    true: 'Payment Successful',
+    false: 'Payment Failed',
     pending: 'Payment Processing'
   };
+
+  // Mapeo de códigos de moneda a símbolos
+  const currencyCodes = {
+    '484': 'MXN',
+    '840': 'USD',
+    '978': 'EUR',
+    '826': 'GBP'
+  };
+
+  // Obtener el símbolo de moneda basado en el código
+  const currencySymbol = currencyCodes[transaction.currency] || transaction.currency;
+
 
   return (
     <Layout title="Payment Confirmation">
       <div className="max-w-2xl mx-auto">
         <Card className="overflow-hidden">
-          <div className={`p-4 ${statusColors[transaction.status]} text-white text-center`}>
+          <div className={`p-4 ${transaction ? statusColors[transaction.status === 'APROBADA'] : statusColors.pending} text-white text-center`}>
             <h2 className="text-lg font-semibold">
-              {statusMessages[transaction.status]}
+              {statusMessages[transaction.status === 'APROBADA'] || 'Payment Status'}
             </h2>
           </div>
 
@@ -101,23 +115,23 @@ export default function ConfirmationPage() {
                   <span className="font-medium">
                     {new Intl.NumberFormat('en-US', {
                       style: 'currency',
-                      currency: transaction.currency
+                      currency: currencySymbol
                     }).format(transaction.amount)}
                   </span>
                 </div>
                 <div className="flex justify-between py-2 border-t border-gray-100">
                   <span className="text-gray-600">Status:</span>
                   <span className={`font-medium ${
-                    transaction.status === 'completed' ? 'text-green-600' : 
-                    transaction.status === 'failed' ? 'text-red-600' : 'text-yellow-600'
+                    !transaction ? 'text-yellow-600' : 
+                    transaction.success ? 'text-green-600' : 'text-red-600' 
                   }`}>
-                    {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                    {transaction.status ? (transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)) : 'Unknown'}
                   </span>
                 </div>
                 <div className="flex justify-between py-2 border-t border-gray-100">
                   <span className="text-gray-600">Date:</span>
                   <span className="font-medium">
-                    {new Date(transaction.created_at).toLocaleString()}
+                    {transaction.created_at ? new Date(transaction.created_at).toLocaleString() : new Date().toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -132,24 +146,24 @@ export default function ConfirmationPage() {
                 </div>
                 <div className="flex justify-between py-2 border-t border-gray-100">
                   <span className="text-gray-600">Email:</span>
-                  <span className="font-medium">{transaction.customer_email}</span>
+                  <span className="font-medium">{transaction.customer_email || 'N/A'}</span>
                 </div>
               </div>
             </div>
 
-            {transaction.status === 'completed' && (
+            {transaction.success && (
               <Alert type="success">
                 Your payment has been processed successfully. A confirmation email has been sent to your email address.
               </Alert>
             )}
 
-            {transaction.status === 'failed' && (
+            {!transaction.status && (
               <Alert type="error">
                 Your payment could not be processed. Please try again or contact customer support for assistance.
               </Alert>
             )}
 
-            {transaction.status === 'pending' && (
+            {!transaction && (
               <Alert type="warning">
                 Your payment is being processed. We'll update you once the payment is confirmed.
               </Alert>
@@ -159,8 +173,8 @@ export default function ConfirmationPage() {
               <Link href="/">
                 <Button variant="primary">Return to Home</Button>
               </Link>
-              
-              {transaction.status === 'failed' && (
+
+              {!transaction.success && (
                 <Link href="/">
                   <Button variant="secondary">Try Again</Button>
                 </Link>

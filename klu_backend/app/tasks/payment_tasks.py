@@ -24,17 +24,18 @@ def process_payment(transaction_id: str, payment_data: dict):
 
         # Procesar el pago con Blumonpay
         payment_result = blumonpay_service.process_payment_sync(payment_data=payment_data)
-
+        payment_status = payment_result.get("message")
+        payment_id = payment_result.get("id")
         # Actualizar el estado de la transacción
         db = SessionLocal()
         updated_transaction = transaction_repo.update_transaction_status(
-            db,
-            transaction_id,
-            payment_result["status"],
-            payment_result.get("blumonpay_transaction_id"),
+            db=db,
+            transaction_id=transaction_id,
+            status=payment_status,
+            blumonpay_transaction_id=payment_id,
         )
         logger.info(
-            f"Transaction {transaction_id} updated with status {payment_result['status']}"
+            f"Transaction {transaction_id} updated with status {payment_status} and payment id {payment_id}"
         )
         return {
             "transaction_id": str(updated_transaction.id),
