@@ -6,6 +6,7 @@ import Card from './ui/Card';
 import Button from './ui/Button';
 import {processPayment} from "@/utils/api";
 import {PaymentSchema} from "@/utils/validation";
+import Image from 'next/image';
 
 
 export default function PaymentForm() {
@@ -367,9 +368,24 @@ export default function PaymentForm() {
                         <div className="text-center text-sm text-gray-500">
                             <p>Your payment information is secured with industry-standard encryption</p>
                             <div className="flex justify-center mt-3 space-x-4">
-                                <img src="/images/payment-icons/visa.svg" alt="Visa" className="h-6"/>
-                                <img src="/images/payment-icons/mastercard.svg" alt="Mastercard" className="h-6"/>
-                                <img src="/images/payment-icons/amex.svg" alt="American Express" className="h-6"/>
+                                <Image
+                                    src="/images/payment-icons/visa.svg"
+                                    alt="Visa"
+                                    width={24}
+                                    height={24}
+                                />
+                                <Image
+                                    src="/images/payment-icons/mastercard.svg"
+                                    alt="Mastercard"
+                                    width={24}
+                                    height={24}
+                                />
+                                <Image
+                                    src="/images/payment-icons/amex.svg"
+                                    alt="American Express"
+                                    width={24}
+                                    height={24}
+                                />
                             </div>
                         </div>
                     </Form>

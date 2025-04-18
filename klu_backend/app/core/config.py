@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     # Redis (para Celery)
     REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
     REDIS_PORT: int = int(os.getenv("REDIS_PORT", 6379))
+    REDIS_PASSWORD: str = os.getenv("REDIS_PASSWORD", "redis")
 
     class Config:
         env_file = ".env"
@@ -43,7 +44,7 @@ class Settings(BaseSettings):
         return self.SQLITE_URI
 
     def get_redis_url(self) -> str:
-        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"
+        return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/0"
 
 
 settings = Settings()

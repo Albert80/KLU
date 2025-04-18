@@ -4,6 +4,7 @@ from app.db.session import engine
 from app.models.transaction import Base
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 # Crear tablas en la base de datos (pero ya existe alembic)
 # Base.metadata.create_all(bind=engine)
@@ -14,6 +15,7 @@ app = FastAPI(
     debug=True,
 )
 
+app.add_middleware(HTTPSRedirectMiddleware)
 
 # Configurar CORS
 app.add_middleware(
@@ -31,3 +33,8 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Payments App API"}
+
+
+@app.get("/healthcheck")
+def read_root():
+    return {"status": "ok"}

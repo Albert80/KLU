@@ -4,7 +4,11 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-celery_app = Celery("worker", broker=settings.get_redis_url())
+celery_app = Celery(
+    main="worker",
+    broker=settings.get_redis_url(),
+    backend=settings.get_redis_url(),
+)
 
 celery_app.conf.update(
     task_serializer="json",

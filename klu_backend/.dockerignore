@@ -1,0 +1,12 @@
+# Evitar entornos virtuales y archivos temporales
+.venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.env.*
+.idea/
+.vscode/
+dist/
+build/

@@ -1,0 +1,162 @@
+services:
+  db:
+    image: postgres:14-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - ./.env
+    ports:
+      - "127.0.0.1:15432:5432"  # Restringido a localhost
+    restart: unless-stopped
+    networks:
+      - backend_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    ports:
+      - "127.0.0.1:16379:6379"  # Restringido a localhost
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - backend_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./klu_backend
+      dockerfile: Dockerfile
+      args:
+        - ENVIRONMENT=production
+    command: uv run uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4 --limit-concurrency 100 --backlog 128 --proxy-headers
+    ports:
+      - "127.0.0.1:18000:8000"  # Restringido a localhost
+    env_file:
+      - ./.env
+    environment:
+      - DB_TYPE=postgres
+      - POSTGRES_SERVER=db
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - backend_network
+      - frontend_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/healthcheck" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  celery_worker:
+    build:
+      context: ./klu_backend
+      dockerfile: Dockerfile
+    command: uv run celery -A app.worker worker -Q celery,payments-queue --loglevel=info
+    env_file:
+      - ./.env
+    environment:
+      - DB_TYPE=postgres
+      - POSTGRES_SERVER=db
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    depends_on:
+      - api
+      - redis
+    restart: unless-stopped
+    networks:
+      - backend_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  flower:
+    image: mher/flower
+    command: celery --broker=redis://:${REDIS_PASSWORD}@redis:6379/0 flower --port=5555 --basic_auth=admin:admin
+    ports:
+      - "15555:5555"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - backend_network
+
+  frontend:
+    build:
+      context: ./klu_ui
+      dockerfile: Dockerfile
+    ports:
+      - "13000:3000"
+    env_file:
+      - ./.env
+    environment:
+      - NEXT_PUBLIC_API_URL=https://api:8000/api/v1  # Usa nombre de servicio
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - frontend_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./certs:/etc/nginx/certs  # Directorio con tus certificados SSL
+    ports:
+      - "443:443"
+    depends_on:
+      - api
+    networks:
+      - frontend_network
+    restart: unless-stopped
+
+networks:
+  backend_network:
+    driver: bridge
+  frontend_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
